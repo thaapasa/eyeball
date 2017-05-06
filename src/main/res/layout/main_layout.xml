@@ -6,11 +6,18 @@
     android:id="@+id/main_layout"
     android:orientation="vertical">
 
+    <Spinner
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/dir_selector"/>
+
     <com.google.vr.sdk.widgets.pano.VrPanoramaView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/pano_view"
         android:layout_margin="0dip"
-        android:scrollbars="@null" />
+        android:scrollbars="@null" >
+
+    </com.google.vr.sdk.widgets.pano.VrPanoramaView>
 
 </LinearLayout>

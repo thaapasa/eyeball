@@ -4,10 +4,10 @@ import android.os.Environment
 import android.util.Log
 import java.io.File
 import java.io.FileFilter
-import java.util.*
 
 class ImageBrowser(private val loader: ImageBrowser.ImageLoader) {
     private var index = 0
+    private var selectedDir = DIR
 
     interface ImageLoader {
         fun load(image: File?)
@@ -29,43 +29,65 @@ class ImageBrowser(private val loader: ImageBrowser.ImageLoader) {
         loader.load(image)
     }
 
+    fun select(dir: File) {
+        if (dir.isDirectory && dir.canRead()) {
+            Log.i(TAG, "Selected directory $dir")
+            selectedDir = dir
+            load()
+        }
+    }
+
     val image: File?
         get() {
-            val files = images
+            val files = images(selectedDir)
             if (files.isEmpty()) {
-                Log.w(TAG, "No images in " + DIR)
+                Log.w(TAG, "No images in " + selectedDir)
                 return null
             }
             index = bound(index, files.size)
             return files[index]
         }
 
-    private val images: List<File>
-        get() {
-            Log.i(TAG, "Loading images from " + DIR)
-            if (DIR.isDirectory) {
-                if (!DIR.canRead()) {
-                    Log.w(TAG, "Cannot read image directory")
-                }
-                val images = DIR.listFiles(notDirectoryFilter)
-                return if (images != null) Arrays.asList(*images) else noFiles
-            } else
+    val directories: List<Pair<String, File>>
+        get() = listOf("[Eyeball]" to DIR) + directories(DIR, "")
+
+    fun images(dir: File): List<File> {
+        Log.i(TAG, "Loading images from " + dir)
+        if (dir.isDirectory) {
+            if (!dir.canRead()) {
+                Log.w(TAG, "Cannot read image directory")
                 return noFiles
-        }
+            }
+            val files = dir.listFiles(FileFilter { !it.isDirectory })
+            return files?.sorted() ?: noFiles
+        } else
+            return noFiles
+    }
 
     companion object {
 
-        private val TAG = "ImageBrowser"
-        private val DIR = File("${Environment.getExternalStorageDirectory().path}/Pictures/Eyeball")
+        val TAG = "ImageBrowser"
+        val DIR = File("${Environment.getExternalStorageDirectory().path}/Pictures/Eyeball")
 
-        private fun bound(value: Int, max: Int): Int = when {
+        fun bound(value: Int, max: Int): Int = when {
             value < 0 -> bound(value + max, max)
-            value > max -> bound(value - max, max)
+            value >= max -> bound(value - max, max)
             else -> value
         }
 
-        private val notDirectoryFilter = FileFilter { !it.isDirectory }
+        val noFiles: List<File> = listOf()
 
-        private val noFiles: List<File> = listOf()
+        fun directories(parent: File, prefix: String): List<Pair<String, File>> {
+            val dirs = parent.listFiles(FileFilter { it.isDirectory })
+            val namedDirs = dirs.sorted().map{ combine(prefix, it.name) to it }
+            return namedDirs + namedDirs.map { directories(it.second, it.first) }.flatten()
+        }
+
+        fun combine(a: String, b: String): String = when {
+            a.isBlank() -> b
+            b.isBlank() -> a
+            else -> "$a/$b"
+        }
+
     }
 }
