@@ -46,6 +46,7 @@ android {
 
 dependencies {
     compile 'com.google.vr:sdk-panowidget:1.40.0'
+    compile 'com.google.vr:sdk-videowidget:1.40.0'
     compile 'com.google.vr:sdk-base:1.40.0'
     compile 'com.google.vr:sdk-controller:1.40.0'
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"

@@ -5,9 +5,10 @@ import android.util.Log
 import java.io.File
 import java.io.FileFilter
 
-class ImageBrowser(private val loader: ImageBrowser.ImageLoader) {
+class ImageBrowser(private val loader: ImageBrowser.ImageLoader, vararg extensions: String) {
     private var index = 0
     private var selectedDir = DIR
+    private val lowerExts = extensions.map { it.toLowerCase() }
 
     interface ImageLoader {
         fun load(image: File?)
@@ -48,8 +49,7 @@ class ImageBrowser(private val loader: ImageBrowser.ImageLoader) {
             return files[index]
         }
 
-    val directories: List<Pair<String, File>>
-        get() = listOf("[Eyeball]" to DIR) + directories(DIR, "")
+    val filter: (File) -> Boolean = { !it.isDirectory && it.extension.toLowerCase() in lowerExts }
 
     fun images(dir: File): List<File> {
         Log.i(TAG, "Loading images from " + dir)
@@ -58,7 +58,7 @@ class ImageBrowser(private val loader: ImageBrowser.ImageLoader) {
                 Log.w(TAG, "Cannot read image directory")
                 return noFiles
             }
-            val files = dir.listFiles(FileFilter { !it.isDirectory })
+            val files = dir.listFiles(filter)
             return files?.sorted() ?: noFiles
         } else
             return noFiles
@@ -88,6 +88,9 @@ class ImageBrowser(private val loader: ImageBrowser.ImageLoader) {
             b.isBlank() -> a
             else -> "$a/$b"
         }
+
+        val directories: List<Pair<String, File>>
+            get() = listOf("[Eyeball]" to DIR) + directories(DIR, "")
 
     }
 }

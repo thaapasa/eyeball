@@ -5,8 +5,12 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Spinner
 import com.google.vr.sdk.widgets.pano.VrPanoramaView
+import com.google.vr.sdk.widgets.video.VrVideoView
 
 class EyeballViewerActivity : Activity() {
 
@@ -15,16 +19,47 @@ class EyeballViewerActivity : Activity() {
     // perform actions on the UI thread in response to controller events.
     private val uiHandler = Handler()
 
-    // All state is managed in the viewer class that maintains non-null values
-    private var viewer: ImageViewer? = null
+    // All state is managed in these classes that maintain non-null values
+    private var imageViewer: ImageViewer? = null
+    private var videoViewer: VideoViewer? = null
+    private var controller: ControllerHandler? = null
+    private val dirs = ImageBrowser.directories
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main_layout)
 
-        val widgetView = findViewById(R.id.pano_view) as VrPanoramaView
+        val panoView = findViewById(R.id.pano_view) as VrPanoramaView
+        val videoView = findViewById(R.id.video_view) as VrVideoView
+
+        imageViewer = ImageViewer(this, uiHandler, panoView)
+        videoViewer = VideoViewer(this, uiHandler, videoView)
+
+        val control = object: EyeballController {
+            override fun next() {
+                imageViewer?.next()
+                videoViewer?.next()
+            }
+
+            override fun previous() {
+                imageViewer?.previous()
+                videoViewer?.previous()
+            }
+        }
+        controller = ControllerHandler(this, uiHandler, control)
+
         val dirSpinner = findViewById(R.id.dir_selector) as Spinner
-        viewer = ImageViewer(this, uiHandler, widgetView, dirSpinner)
+        val dirAdapter = ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, dirs.map { it.first })
+        dirSpinner.adapter = dirAdapter
+        dirSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+            }
+
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                imageViewer?.select(dirs[position].second)
+                videoViewer?.select(dirs[position].second)
+            }
+        }
 
         // Initial launch of the app or an Activity recreation due to rotation.
         handleIntent(intent)
@@ -40,31 +75,36 @@ class EyeballViewerActivity : Activity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        viewer?.load()
+        Log.i(TAG, "Start from intent $intent")
+        imageViewer?.load()
+        videoViewer?.load()
     }
 
     override fun onStart() {
         super.onStart()
-        viewer?.onStart()
+        controller?.onStart()
     }
 
     override fun onStop() {
-        viewer?.onStop()
+        controller?.onStop()
         super.onStop()
     }
 
     override fun onPause() {
-        viewer?.onPause()
+        imageViewer?.onPause()
+        videoViewer?.onPause()
         super.onPause()
     }
 
     override fun onResume() {
         super.onResume()
-        viewer?.onResume()
+        imageViewer?.onResume()
+        videoViewer?.onResume()
     }
 
     override fun onDestroy() {
-        viewer?.onDestroy()
+        imageViewer?.onDestroy()
+        videoViewer?.onDestroy()
         super.onDestroy()
     }
 

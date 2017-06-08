@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="0dip"
-    android:id="@+id/main_layout"
-    android:orientation="vertical">
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:padding="0dip"
+              android:id="@+id/main_layout"
+              android:orientation="vertical"
+              android:weightSum="1">
 
     <Spinner
         android:layout_width="match_parent"
@@ -13,11 +14,17 @@
 
     <com.google.vr.sdk.widgets.pano.VrPanoramaView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
         android:id="@+id/pano_view"
         android:layout_margin="0dip"
-        android:scrollbars="@null" >
-
+        android:scrollbars="@null"
+        android:layout_height="200dip">
     </com.google.vr.sdk.widgets.pano.VrPanoramaView>
 
+    <com.google.vr.sdk.widgets.video.VrVideoView
+        android:layout_width="match_parent"
+        android:id="@+id/video_view"
+        android:layout_margin="0dip"
+        android:scrollbars="@null"
+        android:layout_height="200dip">
+    </com.google.vr.sdk.widgets.video.VrVideoView>
 </LinearLayout>
