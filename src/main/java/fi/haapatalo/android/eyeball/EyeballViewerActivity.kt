@@ -9,8 +9,11 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Spinner
+import com.google.vr.sdk.widgets.common.VrWidgetView
 import com.google.vr.sdk.widgets.pano.VrPanoramaView
 import com.google.vr.sdk.widgets.video.VrVideoView
+import fi.haapatalo.android.eyeball.EyeballController.MediaType
+import fi.haapatalo.android.eyeball.EyeballController.MediaType.IMAGE
 
 class EyeballViewerActivity : Activity() {
 
@@ -24,6 +27,9 @@ class EyeballViewerActivity : Activity() {
     private var videoViewer: VideoViewer? = null
     private var controller: ControllerHandler? = null
     private val dirs = ImageBrowser.directories
+    private var activeType: MediaType = IMAGE
+
+    fun activeViewer(): Viewer<VrWidgetView>? = if (activeType == IMAGE) imageViewer as Viewer<VrWidgetView>? else videoViewer as Viewer<VrWidgetView>?
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,20 +38,23 @@ class EyeballViewerActivity : Activity() {
         val panoView = findViewById(R.id.pano_view) as VrPanoramaView
         val videoView = findViewById(R.id.video_view) as VrVideoView
 
-        imageViewer = ImageViewer(this, uiHandler, panoView)
-        videoViewer = VideoViewer(this, uiHandler, videoView)
-
         val control = object: EyeballController {
             override fun next() {
-                imageViewer?.next()
-                videoViewer?.next()
+                activeViewer()?.next()
             }
 
             override fun previous() {
-                imageViewer?.previous()
-                videoViewer?.previous()
+                activeViewer()?.previous()
+            }
+
+            override fun activateMedia(type: MediaType) {
+                activeType = type
             }
         }
+        imageViewer = ImageViewer(this, uiHandler, control, panoView)
+        videoViewer = VideoViewer(this, uiHandler, control, videoView)
+
+
         controller = ControllerHandler(this, uiHandler, control)
 
         val dirSpinner = findViewById(R.id.dir_selector) as Spinner

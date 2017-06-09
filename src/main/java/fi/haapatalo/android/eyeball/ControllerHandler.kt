@@ -60,6 +60,8 @@ class ControllerHandler(context: Context, private val uiHandler: Handler, val co
 }
 
 interface EyeballController {
+    enum class MediaType { IMAGE, VIDEO }
+    fun activateMedia(type: MediaType): Unit
     fun next(): Unit
     fun previous(): Unit
 }

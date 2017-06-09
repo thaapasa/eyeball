@@ -6,21 +6,22 @@ import android.net.Uri
 import android.os.AsyncTask
 import android.os.Handler
 import android.util.Log
-import android.widget.Spinner
 import android.widget.Toast
-import com.google.vr.sdk.controller.Controller
-import com.google.vr.sdk.controller.ControllerManager
 import com.google.vr.sdk.widgets.common.VrWidgetView
+import com.google.vr.sdk.widgets.common.VrWidgetView.DisplayMode.FULLSCREEN_MONO
+import com.google.vr.sdk.widgets.common.VrWidgetView.DisplayMode.FULLSCREEN_STEREO
 import com.google.vr.sdk.widgets.pano.VrPanoramaEventListener
 import com.google.vr.sdk.widgets.pano.VrPanoramaView
 import com.google.vr.sdk.widgets.video.VrVideoEventListener
 import com.google.vr.sdk.widgets.video.VrVideoView
 import java.io.File
 
-class ImageViewer(private val context: Context, uiHandler: Handler, panoramaView: VrPanoramaView) :
-        Viewer<VrPanoramaView>(context, uiHandler, panoramaView, "jpg", "jpeg") {
+class ImageViewer(private val context: Context, uiHandler: Handler, private val control: EyeballController, panoramaView: VrPanoramaView) :
+        Viewer<VrPanoramaView>("image", context, uiHandler, panoramaView, "jpg", "jpeg") {
 
-    override fun initEventListeners(view: VrPanoramaView) = view.setEventListener(ActivityEventListener())
+    init {
+        panoramaView.setEventListener(ActivityEventListener())
+    }
 
     private inner class ActivityEventListener : VrPanoramaEventListener() {
         override fun onLoadSuccess() {}
@@ -29,6 +30,14 @@ class ImageViewer(private val context: Context, uiHandler: Handler, panoramaView
             val msg = "Error loading image: $errorMessage"
             Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
             Log.e(Companion.TAG, msg)
+        }
+
+        override fun onDisplayModeChanged(mode: Int) {
+            super.onDisplayModeChanged(mode)
+            if (mode == FULLSCREEN_STEREO || mode == FULLSCREEN_MONO) {
+                control.activateMedia(EyeballController.MediaType.IMAGE)
+                Log.i(TAG, "Activated image browser")
+            }
         }
     }
 
@@ -42,10 +51,12 @@ class ImageViewer(private val context: Context, uiHandler: Handler, panoramaView
 
 }
 
-class VideoViewer(private val context: Context, uiHandler: Handler, videoView: VrVideoView) :
-        Viewer<VrVideoView>(context, uiHandler, videoView, "mp4", "mkv", "mov") {
+class VideoViewer(private val context: Context, uiHandler: Handler, private val control: EyeballController, videoView: VrVideoView) :
+        Viewer<VrVideoView>("video", context, uiHandler, videoView, "mp4", "mkv", "mov") {
 
-    override fun initEventListeners(view: VrVideoView) = view.setEventListener(ActivityEventListener())
+    init {
+        videoView.setEventListener(ActivityEventListener())
+    }
 
     private inner class ActivityEventListener : VrVideoEventListener() {
         override fun onLoadSuccess() {}
@@ -55,30 +66,36 @@ class VideoViewer(private val context: Context, uiHandler: Handler, videoView: V
             Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
             Log.e(Companion.TAG, msg)
         }
+
+        override fun onDisplayModeChanged(mode: Int) {
+            super.onDisplayModeChanged(mode)
+            if (mode == FULLSCREEN_STEREO || mode == FULLSCREEN_MONO) {
+                control.activateMedia(EyeballController.MediaType.VIDEO)
+                Log.i(TAG, "Activated video browser")
+            }
+        }
     }
 
     override fun loadContents(view: VrVideoView, file: File): Boolean {
         val opts = VrVideoView.Options()
         opts.inputType = VrVideoView.Options.TYPE_STEREO_OVER_UNDER
+        opts.inputFormat = VrVideoView.Options.FORMAT_DEFAULT
         view.loadVideo(Uri.fromFile(file), opts)
         return true
     }
 }
 
-abstract class Viewer<in T: VrWidgetView>(private val context: Context, private val uiHandler: Handler, private val view: T, vararg extensions: String) {
+abstract class Viewer<in T: VrWidgetView>(val type: String, private val context: Context, private val uiHandler: Handler, private val view: T, vararg extensions: String) {
 
-    private val browser = ImageBrowser(object : ImageBrowser.ImageLoader {
+    private val browser = ImageBrowser(type, object : ImageBrowser.ImageLoader {
         override fun load(image: File?) {
             loadImage(image)
         }
     }, *extensions)
 
     init {
-        initEventListeners(view)
         Log.i(TAG, "Directories: ${ImageBrowser.directories}")
     }
-
-    abstract fun initEventListeners(view: T): Unit
 
     private var backgroundImageLoaderTask: ImageLoaderTask? = null
 
@@ -99,12 +116,12 @@ abstract class Viewer<in T: VrWidgetView>(private val context: Context, private 
 
     private fun loadImage(image: File?) {
         if (image == null) {
-            Log.w(TAG, "No image specified!")
+            Log.w(TAG, "No $type specified!")
             Toast.makeText(context,
-                    "No images found in /Pictures/Eyeball", Toast.LENGTH_LONG).show()
+                    "No ${type}s found in /Pictures/Eyeball", Toast.LENGTH_LONG).show()
             return
         }
-        Log.i(TAG, "Preparing to load image $image")
+        Log.i(TAG, "Preparing to load $type $image")
         backgroundImageLoaderTask?.cancel(true)
 
         val task = ImageLoaderTask()
@@ -117,7 +134,7 @@ abstract class Viewer<in T: VrWidgetView>(private val context: Context, private 
         override fun doInBackground(vararg fileInformation: File): Boolean = loadImage(fileInformation[0])
 
         private fun loadImage(image: File): Boolean {
-            Log.i(TAG, "Loading image $image...")
+            Log.i(TAG, "Loading $type $image...")
             return loadContents(view, image)
         }
     }
@@ -125,6 +142,6 @@ abstract class Viewer<in T: VrWidgetView>(private val context: Context, private 
     abstract fun loadContents(view: T, file: File): Boolean
 
     companion object {
-        val TAG = ImageViewer::class.java.simpleName
+        val TAG: String = ImageViewer::class.java.simpleName
     }
 }

@@ -5,7 +5,7 @@ import android.util.Log
 import java.io.File
 import java.io.FileFilter
 
-class ImageBrowser(private val loader: ImageBrowser.ImageLoader, vararg extensions: String) {
+class ImageBrowser(val type: String, private val loader: ImageBrowser.ImageLoader, vararg extensions: String) {
     private var index = 0
     private var selectedDir = DIR
     private val lowerExts = extensions.map { it.toLowerCase() }
@@ -15,18 +15,20 @@ class ImageBrowser(private val loader: ImageBrowser.ImageLoader, vararg extensio
     }
 
     operator fun next() {
+        Log.i(TAG, "Loading next $type")
         index += 1
         load()
     }
 
     fun previous() {
+        Log.i(TAG, "Loading previous $type")
         index -= 1
         load()
     }
 
     fun load() {
         val image = image
-        Log.i(TAG, "Loading image $index: $image")
+        Log.i(TAG, "Loading $type $index: $image")
         loader.load(image)
     }
 
@@ -42,7 +44,7 @@ class ImageBrowser(private val loader: ImageBrowser.ImageLoader, vararg extensio
         get() {
             val files = images(selectedDir)
             if (files.isEmpty()) {
-                Log.w(TAG, "No images in " + selectedDir)
+                Log.w(TAG, "No ${type}s in " + selectedDir)
                 return null
             }
             index = bound(index, files.size)
@@ -52,10 +54,10 @@ class ImageBrowser(private val loader: ImageBrowser.ImageLoader, vararg extensio
     val filter: (File) -> Boolean = { !it.isDirectory && it.extension.toLowerCase() in lowerExts }
 
     fun images(dir: File): List<File> {
-        Log.i(TAG, "Loading images from " + dir)
+        Log.i(TAG, "Loading ${type}s from " + dir)
         if (dir.isDirectory) {
             if (!dir.canRead()) {
-                Log.w(TAG, "Cannot read image directory")
+                Log.w(TAG, "Cannot read $type directory")
                 return noFiles
             }
             val files = dir.listFiles(filter)
