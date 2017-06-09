@@ -13,25 +13,25 @@
         android:id="@+id/dir_selector"/>
 
     <LinearLayout
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:weightSum="2">
 
         <com.google.vr.sdk.widgets.pano.VrPanoramaView
-            android:layout_width="match_parent"
+            android:layout_width="100dip"
             android:id="@+id/pano_view"
             android:layout_margin="0dip"
             android:scrollbars="@null"
-            android:layout_height="200dip"
+            android:layout_height="match_parent"
             android:layout_weight="1"/>
 
         <com.google.vr.sdk.widgets.video.VrVideoView
-            android:layout_width="match_parent"
+            android:layout_width="100dip"
             android:id="@+id/video_view"
             android:layout_margin="0dip"
             android:scrollbars="@null"
-            android:layout_height="200dip"
+            android:layout_height="match_parent"
             android:layout_weight="1"/>
     </LinearLayout>
 
