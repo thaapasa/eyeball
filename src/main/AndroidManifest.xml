@@ -17,9 +17,10 @@
       configuration.
     -->
     <application android:label="Eyeball"
-      android:largeHeap="true"
-      android:allowBackup="false"
-      android:theme="@android:style/Theme.Holo.Light">
+                 android:icon="@drawable/eyeball_icon"
+                 android:largeHeap="true"
+                 android:allowBackup="false"
+                 android:theme="@android:style/Theme.Holo.Light">
         <!-- This demo is singleTask since it makes launching via custom adb intents easier. -->
         <activity android:name="fi.haapatalo.android.eyeball.EyeballViewerActivity"
           android:launchMode="singleTask">
